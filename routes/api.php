@@ -1,12 +1,15 @@
 <?php
 
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\RoleController;
 
-Route::prefix('/auth')->middleware(['throttle:api'])->group(function() {
+Route::prefix('/auth')->middleware(['throttle:api', 'guest'])->group(function() {
     Route::post("/login", [AuthController::class, 'UserLogin']);
-    Route::post("/register", [AuthController::class, 'UserRegister'])->middleware('guest');
+    Route::post("/register", [AuthController::class, 'UserRegister']);
 });
 
 Route::prefix("/auth")->middleware(['throttle:api', 'auth:sanctum'])->group(function () {
@@ -15,4 +18,36 @@ Route::prefix("/auth")->middleware(['throttle:api', 'auth:sanctum'])->group(func
     Route::get("/tokens", [AuthController::class, "getTokens"]);
     Route::post("/out_all", [AuthController::class, "deleteTokens"]);
     Route::post("/changePassword", [AuthController::class,"changePassword"]);
+});
+
+Route::prefix("/ref/policy")->middleware(['auth:sanctum'])->group(function () {
+    Route::get('/role', [RoleController::class, 'getRolesList']);
+    Route::get('/role/{id}', [RoleController::class, 'getRole']);
+    Route::post('/role', [RoleController::class, 'createRole']);
+    Route::put('/role/{id}', [RoleController::class,'updateRole']);
+    Route::delete('/role/{id}', [RoleController::class, 'deleteRole']);
+    Route::delete('/role/{id}/soft', [RoleController::class,'softDeleteRole']);
+    Route::post('/role/{id}/restore', [RoleController::class,'restoreRole']);
+
+    Route::post('/role/{role_id}/permission/{permission_id}', [RoleController::class,'ConnectRoleAndPermission']);
+    Route::delete('/role/{role_id}/permission/{permission_id}', [RoleController::class,'DeleteConnectRoleAndPermission']);
+    Route::delete('/role/{role_id}/permission/{permission_id}/soft', [RoleController::class,'SoftDeleteConnectRoleAndPermission']);
+    Route::post('/role/{role_id}/permission/{permission_id}/restore', [RoleController::class,'RestoreConnectRoleAndPermission']);
+
+    Route::get('/permission', [PermissionController::class, 'getPermissionsList']);
+    Route::get('/permission/{id}', [PermissionController::class, 'getPermission']);
+    Route::post('/permission', [PermissionController::class, 'createPermission']);
+    Route::put('/permission/{id}', [PermissionController::class,'updatePermission']);
+    Route::delete('/permission/{id}', [PermissionController::class, 'deletePermission']);
+    Route::delete('/permission/{id}/soft', [PermissionController::class,'softDeletePermission']);
+    Route::post('/permission/{id}/restore', [PermissionController::class,'restorePermission']);
+});
+
+Route::prefix('/ref/user')->middleware(['auth:sanctum'])->group(function () {
+    Route::get('/', [UserController::class, 'getUsersList']);
+    Route::get('/{user_id}/role', [UserController::class,'getUserRoles']);
+    Route::post('/{user_id}/role/{role_id}', [UserController::class,'setUserRole']);
+    Route::delete('/{user_id}/role/{role_id}', [UserController::class,'deleteUserRole']);
+    Route::delete('/{user_id}/role/{role_id}/soft', [UserController::class,'softDeleteUserRole']);
+    Route::post('/{user_id}/role/{role_id}/restore', [UserController::class,'restoreUserRole']);
 });

@@ -25,6 +25,8 @@ class User extends Authenticatable
         'birthday',
     ];
 
+    protected $table = 'users';
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -47,4 +49,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function roles() {
+        return $this->belongsToMany(Role::class, 'user_roles');
+    }
+
 }

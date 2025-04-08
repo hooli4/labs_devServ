@@ -1,0 +1,22 @@
+<?php
+
+namespace App\DTOS;
+
+class RoleDTO {
+    public function __construct(
+        public readonly string $name,
+        public readonly string $description,
+        public readonly string $code
+    ) {
+
+    }
+
+    public function fromArray(array $data) {
+        return new self(
+            $data['name'],
+            $data['description'],
+            $data['code']
+        );
+    }
+
+}

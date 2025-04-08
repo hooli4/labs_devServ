@@ -10,6 +10,8 @@ use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\ChangePasswordRequest;
 use Illuminate\Support\Facades\Hash;
+use App\Models\UserAndRole;
+use App\Models\RoleAndPermission;
 
 class AuthController extends Controller
 {
@@ -36,6 +38,9 @@ class AuthController extends Controller
     }
 
     public function userInfo() {
+        if (!in_array('SUI', Controller::check_right(Auth::user()->id))) {
+            return response()->json(['message'=> 'Your role need permission "show-user-info"'],403);
+        }
         return response()->json(new UserResource(Auth::user()));
     }
 
@@ -53,6 +58,11 @@ class AuthController extends Controller
     }
 
     public function changePassword(ChangePasswordRequest $request) {
+
+        if (!in_array('ChangePass', Controller::check_right(Auth::user()->id))) {
+            return response()->json(['message'=> 'Your role need permission "change-password"'],403);
+        }
+
         $user = Auth::user();
 
         if (Hash::check($request->password, $user->password)) {
