@@ -32,4 +32,8 @@ class Role extends Model
         return $this->belongsToMany(User::class, 'user_roles');
     }
 
+    public function logs() {
+        return $this->morphMany(ChangeLog::class, 'entity');
+    }
+
 }

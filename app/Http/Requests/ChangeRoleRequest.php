@@ -23,18 +23,15 @@ class ChangeRoleRequest extends FormRequest
     {
         return [
             'name' => [
-                'required',
                 'string',
-                'unique:roles,name',
+                'unique:roles,name,' . $this->route('id'),
             ],
             'description' => [
-                'required',
                 'string',
             ],
             'code' => [
-                'required',
                 'string',
-                'unique:roles,code',
+                'unique:roles,code,' . $this->route('id'),
             ],
         ];
     }

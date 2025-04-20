@@ -10,17 +10,24 @@ use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\ChangePasswordRequest;
 use Illuminate\Support\Facades\Hash;
-use App\Models\UserAndRole;
-use App\Models\RoleAndPermission;
+use Illuminate\Support\Facades\DB;
+
 
 class AuthController extends Controller
 {
     public function UserRegister(RegisterRequest $request) {
 
-        $user = User::create($request->all());
+        DB::transaction(function () use ($request) {
+            try {
+                User::create($request->all());
+            }
+            catch (\Exception $e) {
+                throw $e;
+            }
 
-        return response()->json(new UserResource($user), 201);
-
+            $user = User::where("email", $request->email)->first();
+            return response()->json(new UserResource($user), 201);
+        });
     }
 
     public function UserLogin(LoginRequest $request) {
@@ -64,15 +71,21 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
+        
+        DB::transaction(function () use ($user, $request) {
+            try {
+                if (Hash::check($request->password, $user->password)) {
+                    $user->password = Hash::make($request->new_password);
+                    $user->save();
+        
+                    return response()->json(['message' => 'Пароль был успешно изменён']);
+                }
 
-        if (Hash::check($request->password, $user->password)) {
-            $user->password = Hash::make($request->new_password);
-            $user->save();
-
-            return response()->json(['message' => 'Пароль был успешно изменён']);
-        }
-
-        return response()->json(['message' => 'Введён неправильный пароль'], 403);
+                return response()->json(['message' => 'Введён неправильный пароль'], 403);
+            }
+            catch (\Exception $e) {
+                throw $e;
+            }
+        });
     }
-
 }

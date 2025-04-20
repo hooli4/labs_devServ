@@ -8,6 +8,10 @@ Use Illuminate\Support\Facades\Auth;
 use App\Models\UserAndRole;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Http\Requests\ChangeUserInfoRequest;
+use App\DTOS\UserDTO;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 
 class UserController extends Controller
@@ -143,6 +147,59 @@ class UserController extends Controller
         }
 
         return response()->json(['message'=> 'This user and role are not connected']);
+    }
+
+    public function changeUserInfo(ChangeUserInfoRequest $request) {
+
+        if (!in_array('CUI', Controller::check_right(Auth::user()->id))) {
+            return response()->json(['message'=> 'Your role need permission "change-user-info"'],403);
+        }
+
+        $user = User::find($request->id);
+        if (!$user) {
+            return response()->json(['message'=> 'User is not found'], 404);
+        }
+
+        if (!Hash::check($request->c_password, $user['password'])) {
+            return response()->json(['message'=> 'Incorrect password'], 401);
+        }
+
+        $validated = [
+            'id' => $request->id,
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => $request->new_password,
+            'birthday' => $request->birthday,
+        ];
+
+        $userDTO = UserDTO::fromArray($validated);
+
+        DB::transaction(function () use ($userDTO, $user) {
+            try {
+                if (!is_null($userDTO->name)) {
+                    $user->name = $userDTO->name;
+                }
+
+                if (!is_null($userDTO->email)) {
+                    $user->email = $userDTO->email;
+                }
+
+                if (!is_null($userDTO->password)) {
+                    $user->password = Hash::make($userDTO->password);
+                }
+
+                if (!is_null($userDTO->birthday)) {
+                    $user->birthday = $userDTO->birthday;
+                }
+
+                $user->save();
+            }
+            catch (\Exception $e) {
+                throw $e;
+            }
+        });
+        
+        return response()->json($user, 200);
     }
 
 }

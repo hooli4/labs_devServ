@@ -4,7 +4,7 @@ namespace App\DTOS;
 
 use Illuminate\Support\Collection;
 
-class RoleCollectionDTO {
+class PermissionCollectionDTO {
     public function __construct(
         array $data) {
             $this->data = $data;

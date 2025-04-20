@@ -23,18 +23,15 @@ class ChangePermissionRequest extends FormRequest
     {
         return [
             'name' => [
-                'required',
                 'string',
-                'unique:permissions,name',
+                'unique:permissions,name,' . $this->route('id'),
             ],
             'description' => [
-                'required',
                 'string',
             ],
             'code' => [
-                'required',
                 'string',
-                'unique:permissions,code',
+                'unique:permissions,code,' . $this->route('id'),
             ],
         ];
     }

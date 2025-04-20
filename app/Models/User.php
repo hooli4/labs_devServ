@@ -18,6 +18,8 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    public $timestamps = false;
+    
     protected $fillable = [
         'name',
         'password',
@@ -52,6 +54,10 @@ class User extends Authenticatable
 
     public function roles() {
         return $this->belongsToMany(Role::class, 'user_roles');
+    }
+
+    public function logs() {
+        return $this->morphMany(ChangeLog::class, 'entity');
     }
 
 }

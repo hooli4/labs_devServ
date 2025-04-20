@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\LogController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ Route::prefix("/auth")->middleware(['throttle:api', 'auth:sanctum'])->group(func
     Route::post("/out", [AuthController::class, "logout"]);
     Route::get("/tokens", [AuthController::class, "getTokens"]);
     Route::post("/out_all", [AuthController::class, "deleteTokens"]);
-    Route::post("/changePassword", [AuthController::class,"changePassword"]);
+    Route::put("/changePassword", [AuthController::class,"changePassword"]);
 });
 
 Route::prefix("/ref/policy")->middleware(['auth:sanctum'])->group(function () {
@@ -28,6 +29,8 @@ Route::prefix("/ref/policy")->middleware(['auth:sanctum'])->group(function () {
     Route::delete('/role/{id}', [RoleController::class, 'deleteRole']);
     Route::delete('/role/{id}/soft', [RoleController::class,'softDeleteRole']);
     Route::post('/role/{id}/restore', [RoleController::class,'restoreRole']);
+    Route::get('/role/{id}/story', [LogController::class, 'showRoleStory']);
+    Route::put('/role/{role_id}/log/{log_id}', [LogController::class, 'getBackToRoleLog']);
 
     Route::post('/role/{role_id}/permission/{permission_id}', [RoleController::class,'ConnectRoleAndPermission']);
     Route::delete('/role/{role_id}/permission/{permission_id}', [RoleController::class,'DeleteConnectRoleAndPermission']);
@@ -41,13 +44,19 @@ Route::prefix("/ref/policy")->middleware(['auth:sanctum'])->group(function () {
     Route::delete('/permission/{id}', [PermissionController::class, 'deletePermission']);
     Route::delete('/permission/{id}/soft', [PermissionController::class,'softDeletePermission']);
     Route::post('/permission/{id}/restore', [PermissionController::class,'restorePermission']);
+    Route::get('/permission/{id}/story', [LogController::class, 'showPermissionStory']);
+    Route::put('/permission/{permission_id}/log/{log_id}', [LogController::class, 'getBackToPermissionLog']);
 });
 
 Route::prefix('/ref/user')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/', [UserController::class, 'getUsersList']);
+    Route::put('/{id}/changeInfo', [UserController::class,'changeUserInfo']);
+    Route::get('/{id}/story', [LogController::class,'showUserStory']);
     Route::get('/{user_id}/role', [UserController::class,'getUserRoles']);
     Route::post('/{user_id}/role/{role_id}', [UserController::class,'setUserRole']);
     Route::delete('/{user_id}/role/{role_id}', [UserController::class,'deleteUserRole']);
     Route::delete('/{user_id}/role/{role_id}/soft', [UserController::class,'softDeleteUserRole']);
     Route::post('/{user_id}/role/{role_id}/restore', [UserController::class,'restoreUserRole']);
+    Route::put('/{user_id}/log/{log_id}', [LogController::class, 'getBackToUserLog']);
 });
+

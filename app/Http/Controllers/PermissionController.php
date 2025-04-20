@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+
 use App\Models\Permission;
-use App\Models\Role;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Http\Requests\CreatePermissionRequest;
 use App\Http\Requests\ChangePermissionRequest;
+use App\DTOS\PermissionDTO;
 
 class PermissionController extends Controller
 {
@@ -44,13 +45,21 @@ class PermissionController extends Controller
         }
         $user = Auth::user();
 
-        Permission::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'code' => $request->code,
-            'created_at' => Carbon::now(),
-            'created_by' => $user->id,
-        ]);
+        DB::transaction(function () use ($request, $user) {
+            try {
+                Permission::create([
+                    'name' => $request->name,
+                    'description' => $request->description,
+                    'code' => $request->code,
+                    'created_at' => Carbon::now(),
+                    'created_by' => $user->id,
+                ]);
+            }
+            catch (\Exception $e) {
+                throw $e;
+            }
+        });
+        
 
         return response()->json(['message' => 'Permission was created successfully'], 201);
     }
@@ -62,17 +71,39 @@ class PermissionController extends Controller
 
         $permission = Permission::find($request->id);
 
-        if ($permission) {
-            $permission->name = $request->name;
-            $permission->code = $request->code;
-            $permission->description = $request->description;
-            $permission->save();
-            return response()->json(['message' => 'Permission was changed successfully']);
+        if (!$permission) {
+            return response()->json(['message' => 'Permission is not found'], 404);
         }
 
-        return response()->json(['message' => 'Permission is not found'], 404);
+        $validated = [
+            'name' => $request->name,
+            'description' => $request->description,
+            'code' => $request->code,
+        ];
 
+        $permissionDTO = PermissionDTO::fromArray($validated);
+        DB::transaction(function () use ($permissionDTO, $permission) {
+            try {
+                if (!is_null($permissionDTO->name)) {
+                    $permission->name = $permissionDTO->name;
+                }
 
+                if ($permissionDTO->description !== null) {
+                    $permission->description = $permissionDTO->description;
+                }
+
+                if ($permissionDTO->code !== null) {
+                    $permission->code = $permissionDTO->code;
+                }
+
+                $permission->save();
+            }
+            catch (\Exception $e) {
+                throw $e;
+            }
+        });
+
+        return response()->json(['message' => 'Permission was changed successfully']);
     }
 
     public function deletePermission($id) {
@@ -82,12 +113,22 @@ class PermissionController extends Controller
 
         $permission = Permission::find($id);
 
-        if ($permission) {
-            $permission->forceDelete();
-            return response()->json(['message'=> 'Permission was deleted fully and successfully']);
+        if (!$permission) {
+            return response()->json(['message' => 'Permission is not found'], 404);
         }
+        
+        DB::transaction(function () use ($permission) {
+            try {
+                if ($permission) {
+                    $permission->forceDelete();
+                }
+            }
+            catch (\Exception $e) {
+                throw $e;
+            }
+        });
 
-        return response()->json(['message' => 'Permission is not found'], 404);
+        return response()->json(['message'=> 'Permission was deleted fully and successfully']);
 
     }
 
@@ -98,14 +139,24 @@ class PermissionController extends Controller
 
         $permission = Permission::find($id);
 
-        if ($permission) {
-            $permission->deleted_by = Auth::user()->id;
-            $permission->save();
-            $permission->delete();
-            return response()->json(['message'=> 'Permission was deleted softly and successfully']);
+        if (!$permission) {
+            return response()->json(['message'=> 'Permission is not found'], 404);
         }
 
-        return response()->json(['message'=> 'Permission is not found'], 404);
+        DB::transaction(function () use ($permission) {
+            try {
+                if ($permission) {
+                    $permission->deleted_by = Auth::user()->id;
+                    $permission->save();
+                    $permission->delete();
+                }
+            }
+            catch (\Exception $e) {
+                throw $e;
+            }
+        });
+
+        return response()->json(['message'=> 'Permission was deleted softly and successfully']);
     }
 
     public function restorePermission($id) {
@@ -115,13 +166,23 @@ class PermissionController extends Controller
 
         $permission = Permission::withTrashed()->find($id);
 
-        if ($permission) {
-            $permission->deleted_by = null;
-            $permission->save();
-            $permission->restore();
-            return response()->json(['message'=> 'Permission was restored successfully']);
+        if (!$permission) {
+            return response()->json(['message' => 'Permission is not found'], 404);
         }
 
-        return response()->json(['message' => 'Permission is not found'], 404);
+        DB::transaction(function () use ($permission) {
+            try {
+                if ($permission) {
+                    $permission->deleted_by = null;
+                    $permission->save();
+                    $permission->restore();
+                }
+            }
+            catch (\Exception $e) {
+                throw $e;
+            }
+        });
+
+        return response()->json(['message' => 'Permission was restored successfully']);
     }
 }

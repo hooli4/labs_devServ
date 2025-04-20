@@ -25,4 +25,9 @@ class Permission extends Model
     public function roles() {
         return $this->belongsToMany(Role::class, 'role_permissions');
     }
+
+    public function logs() {
+        return $this->morphMany(ChangeLog::class, 'entity');
+    }
+
 }

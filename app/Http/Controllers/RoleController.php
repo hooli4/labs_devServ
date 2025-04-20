@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Permission;
 use Illuminate\Http\Request;
 use App\Models\RoleAndPermission;
+use Illuminate\Support\Facades\DB;
+use App\DTOS\RoleDTO;
 
 class RoleController extends Controller
 {
@@ -46,14 +48,20 @@ class RoleController extends Controller
         }
 
         $user = Auth::user();
-
-        Role::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'code' => $request->code,
-            'created_at' => Carbon::now(),
-            'created_by' => $user->id,
-        ]);
+        DB::transaction(function () use ($request, $user) {
+            try {
+                Role::create([
+                    'name' => $request->name,
+                    'description' => $request->description,
+                    'code' => $request->code,
+                    'created_at' => Carbon::now(),
+                    'created_by' => $user->id,
+                ]);
+            }
+            catch (\Exception $e) {
+                throw $e;
+            }
+        });
 
         return response()->json(['message' => 'Role was created successfully'], 201);
     }
@@ -66,17 +74,40 @@ class RoleController extends Controller
 
         $role = Role::find($request->id);
 
-        if ($role) {
-            $role->name = $request->name;
-            $role->code = $request->code;
-            $role->description = $request->description;
-            $role->save();
-            return response()->json(['message' => 'Role was changed successfully']);
+        if (!$role) {
+            return response()->json(['message' => 'Role is not found'], 404);
         }
 
-        return response()->json(['message' => 'Role is not found'], 404);
+        $validated = [
+            'name' => $request->name,
+            'description' => $request->description,
+            'code' => $request->code,
+        ];
 
+        $roleDTO = RoleDTO::fromArray($validated);
 
+        DB::transaction(function () use ($roleDTO, $role) {
+            try {
+                if ($roleDTO->name !== null) {
+                    $role->name = $roleDTO->name;
+                }
+
+                if ($roleDTO->description !== null) {
+                    $role->description = $roleDTO->description;
+                }
+
+                if ($roleDTO->code !== null) {
+                    $role->code = $roleDTO->code;
+                }
+
+                $role->save();
+            }
+            catch (\Exception $e) {
+                throw $e;
+            }
+        });
+
+        return response()->json(['message' => 'Role was changed successfully']);
     }
 
     public function deleteRole($id) {
@@ -87,13 +118,22 @@ class RoleController extends Controller
 
         $role = Role::find($id);
 
-        if ($role) {
-            $role->forceDelete();
-            return response()->json(['message'=> 'Role was deleted fully and successfully']);
+        if (!$role) {
+            return response()->json(['message' => 'Role is not found'], 404);
         }
 
-        return response()->json(['message' => 'Role is not found'], 404);
+        DB::transaction(function () use ($role) {
+            try {
+                if ($role) {
+                    $role->forceDelete();
+                }
+            }
+            catch (\Exception $e) {
+                throw $e;
+            }
+        });
 
+        return response()->json(['message' => 'Role was deleted fully and successfully']);
     }
 
     public function softDeleteRole($id) {
@@ -104,14 +144,24 @@ class RoleController extends Controller
 
         $role = Role::find($id);
 
-        if ($role) {
-            $role->deleted_by = Auth::user()->id;
-            $role->save();
-            $role->delete();
-            return response()->json(['message'=> 'Role was deleted softly and successfully']);
+        if (!$role) {
+            return response()->json(['message'=> 'Role is not found'], 404);
         }
 
-        return response()->json(['message'=> 'Role is not found'], 404);
+        DB::transaction(function () use ($role) {
+            try {
+                if ($role) {
+                    $role->deleted_by = Auth::user()->id;
+                    $role->save();
+                    $role->delete();
+                }        
+            }
+            catch (\Exception $e) {
+                throw $e;
+            }
+        });
+        
+        return response()->json(['message'=> 'Role was deleted softly and successfully']);
     }
 
     public function restoreRole($id) {
@@ -122,14 +172,24 @@ class RoleController extends Controller
 
         $role = Role::withTrashed()->find($id);
 
-        if ($role) {
-            $role->deleted_by = null;
-            $role->save();
-            $role->restore();
-            return response()->json(['message'=> 'Role was restored successfully']);
+        if (!$role) {
+        return response()->json(['message' => 'Role is not found'], 404);
         }
 
-        return response()->json(['message' => 'Role is not found'], 404);
+        DB::transaction(function () use ($role) {
+            try {
+                if ($role) {
+                    $role->deleted_by = null;
+                    $role->save();
+                    $role->restore();
+                }     
+            }
+            catch (\Exception $e) {
+                throw $e;
+            }
+        });
+
+        return response()->json(['message'=> 'Role was restored successfully']);
     }
 
     public function ConnectRoleAndPermission(Request $request) {
