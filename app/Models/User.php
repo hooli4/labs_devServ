@@ -25,6 +25,7 @@ class User extends Authenticatable
         'password',
         'email',
         'birthday',
+        'email_verified_at',
     ];
 
     protected $table = 'users';
@@ -58,6 +59,10 @@ class User extends Authenticatable
 
     public function logs() {
         return $this->morphMany(ChangeLog::class, 'entity');
+    }
+
+    public function TwoFactorAuths() {
+        return $this->belongsToMany(TwoFactorAuth::class, '2fa');
     }
 
 }

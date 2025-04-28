@@ -2,15 +2,20 @@
 
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\TwoFactorAuthController;
 use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RoleController;
 
-Route::prefix('/auth')->middleware(['throttle:api', 'guest'])->group(function() {
+Route::prefix('/auth')->middleware(['throttle:api', 'redirectIfAuth'])->group(function() {
     Route::post("/login", [AuthController::class, 'UserLogin']);
     Route::post("/register", [AuthController::class, 'UserRegister']);
+});
+
+Route::prefix('/auth')->middleware(['throttle:api', 'guest'])->group(function() {
+    Route::post('/requestCode', [TwoFactorAuthController::class, 'requestCode']);
+    Route::post('/confirmCode', [TwoFactorAuthController::class, 'confirmCode'])->middleware('redirectIfAuth');
 });
 
 Route::prefix("/auth")->middleware(['throttle:api', 'auth:sanctum'])->group(function () {
@@ -19,6 +24,7 @@ Route::prefix("/auth")->middleware(['throttle:api', 'auth:sanctum'])->group(func
     Route::get("/tokens", [AuthController::class, "getTokens"]);
     Route::post("/out_all", [AuthController::class, "deleteTokens"]);
     Route::put("/changePassword", [AuthController::class,"changePassword"]);
+    Route::post('/toggle', [TwoFactorAuthController::class, 'toggle']);
 });
 
 Route::prefix("/ref/policy")->middleware(['auth:sanctum'])->group(function () {
@@ -60,3 +66,4 @@ Route::prefix('/ref/user')->middleware(['auth:sanctum'])->group(function () {
     Route::put('/{user_id}/log/{log_id}', [LogController::class, 'getBackToUserLog']);
 });
 
+Route::post('/test', [AuthController::class, 'test']);

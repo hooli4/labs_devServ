@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Cookie;
 
-class RedirectIfAuth
+class Guest
 {
     /**
      * Handle an incoming request.
@@ -16,11 +16,10 @@ class RedirectIfAuth
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Cookie::get('remember') !== null) {
-            return response()->json(['message' => 'Already authorized'], 403);
+        if (Cookie::get('user_id') === null && Cookie::get('remember') === null) {
+            return response()->json(['message' => 'Try to login'], 403);
         }
 
         return $next($request);
-
     }
 }

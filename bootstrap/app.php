@@ -14,7 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'guest' => \App\Http\Middleware\RedirectIfAuth::class,
+            'redirectIfAuth' => \App\Http\Middleware\RedirectIfAuth::class,
+            'guest' => \App\Http\Middleware\Guest::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

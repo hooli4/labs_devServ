@@ -11,10 +11,24 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\ChangePasswordRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Jenssegers\Agent\Agent;
+use App\Models\TwoFactorAuth;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 
 
 class AuthController extends Controller
 {
+
+    public function test(Request $request) {
+        $agent = new Agent();
+
+        $browser = $agent->browser();
+        $platform = $agent->platform();
+        $ip = $request->ip();
+
+        return response()->json(['browser' => $browser, 'ip' => $ip, 'platform' => $platform]);
+    }
     public function UserRegister(RegisterRequest $request) {
 
         DB::transaction(function () use ($request) {
@@ -34,11 +48,60 @@ class AuthController extends Controller
 
         if (Auth::attempt($request->only(['name', 'password']))) {
 
-            $token = Auth::user()->createToken('API Token')->plainTextToken;
+            $user = Auth::user(); 
 
-            Cookie::make('remember_auth', 'true', 30);
+            $agent = new Agent();
 
-            return response()->json(['token' => $token], 200);
+            $ip = $request->ip();
+            $browser = $agent->browser();
+            $platform = $agent->platform();
+
+            $user2FA = TwoFactorAuth::where('ip', $ip)->
+            where('browser', $browser)->
+            where('platform', $platform)->
+            where('user_id', $user->id)->first();
+
+            $token2FA = Str::random(60);
+
+            if ($user2FA) {
+                $user2FA->token = $token2FA;
+                $user2FA->save();
+            }
+
+            else {
+                TwoFactorAuth::create([
+                    'user_id' => $user->id,
+                    'ip' => $ip,
+                    'browser' => $browser,
+                    'platform' => $platform,
+                    'token' => $token2FA,
+                ]);
+            }
+
+            $minutes = 60 * 24 * 365 * 5;
+            $cookie = Cookie::make('user_id', $user->id, $minutes);
+
+            if ($user->Twofa) {
+
+                return response()->json([
+                    'status' => 'success',
+                    'token2FA' => $token2FA,
+                    'message' => 'Выдан токен для аутентификации',
+                ])->cookie($cookie);
+            }
+
+            else {
+
+                $token = Auth::user()->createToken('API Token')->plainTextToken;
+                $cookie2 = Cookie::make('remember', true, $minutes);
+
+                return response()->json([
+                    'status' => 'success',
+                    'token' => $token,
+                    'token2FA' => $token2FA,
+                    'message' => 'Вы успешно авторизовались',
+                ])->cookie($cookie)->cookie($cookie2);
+            }
         }
 
         return response()->json(['error' => 'Wrong name or password'], 401);
@@ -53,11 +116,17 @@ class AuthController extends Controller
 
     public function Logout() {
         Auth::user()->currentAccessToken()->delete();
-        Cookie::forget('remember_auth');
+        $cookie = Cookie::forget('user_id');
+        $cookie2 = Cookie::forget('remember');
+
+        return response()->json(['message' => 'Успешное разлогирование'])->cookie($cookie)->cookie($cookie2);
     }
 
     public function deleteTokens() {
         Auth::user()->tokens()->delete();
+        $cookie = Cookie::forget('user_id');
+        $cookie2 = Cookie::forget('remember');
+        return response()->json(['message' => 'Успешное разлогирование'])->cookie($cookie)->cookie($cookie2);
     }
 
     public function getTokens() {
