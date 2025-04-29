@@ -12,6 +12,7 @@ use App\Models\TwoFactorAuth;
 use Carbon\Carbon;
 use App\Mail\ConfirmCode;
 use Illuminate\Support\Facades\Mail;
+use App\DTOS\TwoFactorAuthCollectionDTO;
 
 class TwoFactorAuthController extends Controller
 {
@@ -184,5 +185,13 @@ class TwoFactorAuthController extends Controller
         return response()->json([
            'message' => "Доступ запрещен",
         ], 403);
+    }
+
+    public function accountUsageInfo() {
+        $user = Auth::user();
+
+        $accountUsageInfo = TwoFactorAuthCollectionDTO::fromCollection(TwoFactorAuth::where('user_id', $user->id)->get(['ip', 'browser', 'platform']));
+
+        return response()->json(['accountUsageInfo' => $accountUsageInfo]);
     }
 }

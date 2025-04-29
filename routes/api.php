@@ -25,6 +25,7 @@ Route::prefix("/auth")->middleware(['throttle:api', 'auth:sanctum'])->group(func
     Route::post("/out_all", [AuthController::class, "deleteTokens"]);
     Route::put("/changePassword", [AuthController::class,"changePassword"]);
     Route::post('/toggle', [TwoFactorAuthController::class, 'toggle']);
+    Route::get('/accountUsageInfo', [TwoFactorAuthController::class, 'accountUsageInfo']);
 });
 
 Route::prefix("/ref/policy")->middleware(['auth:sanctum'])->group(function () {
