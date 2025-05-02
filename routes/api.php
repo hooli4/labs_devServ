@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\GitHookController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\TwoFactorAuthController;
@@ -67,4 +68,4 @@ Route::prefix('/ref/user')->middleware(['auth:sanctum'])->group(function () {
     Route::put('/{user_id}/log/{log_id}', [LogController::class, 'getBackToUserLog']);
 });
 
-Route::post('/test', [AuthController::class, 'test']);
+Route::post('hooks/git', [GitHookController::class, 'handle']);
