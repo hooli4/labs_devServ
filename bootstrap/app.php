@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'redirectIfAuth' => \App\Http\Middleware\RedirectIfAuth::class,
             'guest' => \App\Http\Middleware\Guest::class,
+            'LogRequest' => \App\Http\Middleware\LogRequests::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
