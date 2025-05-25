@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\MarkController;
 
 Route::prefix('/auth')->middleware(['throttle:api', 'guest'])->group(function() {
     Route::post("/login", [AuthController::class, 'UserLogin']);
@@ -60,3 +61,4 @@ Route::prefix('/ref/user')->middleware(['auth:sanctum'])->group(function () {
     Route::put('/{user_id}/log/{log_id}', [LogController::class, 'getBackToUserLog']);
 });
 
+Route::get('/test', [MarkController::class, 'test']);
