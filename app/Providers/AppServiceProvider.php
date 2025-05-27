@@ -20,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+
     }
 
     /**
@@ -31,9 +31,5 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for("api", function(Request $request) {
             return Limit::perMinute(5)->by($request->user()?->id ?: $request->ip());
         });
-
-        User::observe(UserObserver::class);
-        Role::observe(RoleObserver::class);
-        Permission::observe(PermissionObserver::class);
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ImportExportController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\UserController;
@@ -58,5 +59,12 @@ Route::prefix('/ref/user')->middleware(['auth:sanctum'])->group(function () {
     Route::delete('/{user_id}/role/{role_id}/soft', [UserController::class,'softDeleteUserRole']);
     Route::post('/{user_id}/role/{role_id}/restore', [UserController::class,'restoreUserRole']);
     Route::put('/{user_id}/log/{log_id}', [LogController::class, 'getBackToUserLog']);
+});
+
+Route::prefix('/importsExports')->group(function() {
+    Route::post('/importUsers', [ImportExportController::class, 'importUsers']);
+    Route::post('/importPermissions' , [ImportExportController::class, 'importPermissions']);
+    Route::get('/exportUsers', [ImportExportController::class, 'exportUsers']);
+    Route::get('/exportPermissions' , [ImportExportController::class, 'exportPermissions']);
 });
 
