@@ -17,6 +17,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 ddddddd;
+aasasas;
 
 
 class AuthController extends Controller
