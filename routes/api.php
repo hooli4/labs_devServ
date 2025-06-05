@@ -3,13 +3,13 @@
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\FileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RoleController;
 
 Route::prefix('/auth')->middleware(['throttle:api', 'guest'])->group(function() {
-    Route::post("/login", [AuthController::class, 'UserLogin']);
+    Route::post("/login", [AuthController::class, 'UserLogin'])->name('login');
     Route::post("/register", [AuthController::class, 'UserRegister']);
 });
 
@@ -60,3 +60,10 @@ Route::prefix('/ref/user')->middleware(['auth:sanctum'])->group(function () {
     Route::put('/{user_id}/log/{log_id}', [LogController::class, 'getBackToUserLog']);
 });
 
+Route::prefix('/images')->middleware(['auth:sanctum'])->group(function() {
+    Route::post('/upload', [FileController::class, 'upload']);
+    Route::delete('/delete/{id}', [FileController::class, 'delete']);
+    Route::get('/download/{id}', [FileController::class, 'download']);
+    Route::put('/setAvatar/{id}', [FileController::class, 'setAvatar']);
+    Route::get('/getArchive', [FileController::class, 'getArchive']);
+});
