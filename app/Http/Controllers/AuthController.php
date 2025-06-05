@@ -16,6 +16,8 @@ use App\Models\TwoFactorAuth;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
+ddddddd;
+
 
 class AuthController extends Controller
 {
