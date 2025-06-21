@@ -4,6 +4,7 @@ use App\Http\Controllers\GitHookController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\LogRequestController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TwoFactorAuthController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -76,3 +77,11 @@ Route::prefix('/ref/log/request')->middleware(['auth:sanctum', 'LogRequest'])->g
 });
 
 Route::post('hooks/git', [GitHookController::class, 'handle']);
+
+Route::prefix('/reports')->group(function () {
+    Route::get('/getEntityStats', [ReportController::class, 'getEntityStats']);
+    Route::get('/getMethodsStats', [ReportController::class, 'getMethodsStats']);
+    Route::get('/getUserStats', [ReportController::class, 'getUserStats']);
+    Route::get('/generate', [ReportController::class, 'generateReport']);
+    Route::get('/create', [ReportController::class, 'create']);
+});
